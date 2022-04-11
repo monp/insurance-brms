@@ -1,0 +1,24 @@
+package rules
+
+import ch.pmo.domain.Certificate
+import ch.pmo.domain.Coverage
+import ch.pmo.domain.Salary
+import org.javamoney.moneta.Money
+
+global ch.pmo.domain.Allowance allowance;
+
+rule "Calculate insurance cost with the given certificate / high incapacity"
+    when
+        $coverage: Coverage ( )
+        $certificate: Certificate(period != null, incapacity > $coverage.minIncapacityRate)
+        $salary: Salary ( )
+    then
+        allowance.setAmount($salary.annual().multiply($coverage.getRate()).divide(365).multiply($certificate.getPeriod().days()));
+end
+
+rule "Calculate insurance cost with the given certificate  / low incapacity"
+    when
+        Certificate(period != null, incapacity <= 0.25)
+    then
+        allowance.setAmount(Money.of(0, "CHF"));
+end
